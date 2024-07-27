@@ -1,1 +1,1 @@
-Look at the Scheme.PNG for the project details.
+Look at the Scheme.PNG for the summary of the project.
