@@ -15,8 +15,8 @@ if obj:
 
     bpy.context.scene.render.image_settings.file_format = 'PNG'
 
-    total_renders = 60
-    render_interval_seconds = 15
+    total_renders = 21
+    render_interval_seconds = 25
 
     for i in range(total_renders):
         frame = start_frame + (i * 240)
