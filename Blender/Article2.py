@@ -273,7 +273,7 @@ else:
 
 # === KAMERA +Z YÖNÜNDEN MOON'A DOĞRU KIRMIZI IŞIN VE TOP ===
 
-for obj_name in ["Line Red Forward", "Hit Pooint Forward"]:
+for obj_name in ["Line Red Forward", "Red Ball Forward"]:
     obj = bpy.data.objects.get(obj_name)
     if obj:
         bpy.data.objects.remove(obj, do_unlink=True)
@@ -281,7 +281,7 @@ for obj_name in ["Line Red Forward", "Hit Pooint Forward"]:
 
 origin = camera.location
 direction = mathutils.Vector((-1, 0, 0))  # +Z yönü
-end_point = origin + direction * 100
+end_point = moon.location
 
 def create_cylinder_between(p1, p2, radius=0.005, name="Line Red Forward", color=(1, 0, 0, 1)):
     p1 = mathutils.Vector(p1)
@@ -307,6 +307,43 @@ def create_cylinder_between(p1, p2, radius=0.005, name="Line Red Forward", color
     return obj
 
 create_cylinder_between(origin, end_point)
+
+# === MOON İLE KIRMIZI IŞININ KESİŞTİĞİ NOKTADA TOP OLUŞTUR ===
+
+depsgraph = bpy.context.evaluated_depsgraph_get()
+direction = (moon.location - camera.location).normalized()
+ray_origin = camera.location
+
+hit, hit_location, normal, index, hit_object, matrix = bpy.context.scene.ray_cast(
+    depsgraph,
+    origin=ray_origin,
+    direction=direction,
+    distance=1000.0  # güvenli mesafe
+)
+
+if hit:
+    print("Çarpılan obje:", hit_object.name)
+    print("Hit location:", hit_location)
+
+if hit and hit_object == moon:
+    if "Red Ball Forward" in bpy.data.objects:
+        bpy.data.objects.remove(bpy.data.objects["Red Ball Forward"], do_unlink=True)
+
+    adjusted_hit_location = hit_location + normal * 0.01
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=0.02, location=adjusted_hit_location)
+    red_ball = bpy.context.active_object
+    red_ball.name = "Red Ball Forward"
+
+    mat = bpy.data.materials.get("RedBallForwardMaterial")
+    if not mat:
+        mat = bpy.data.materials.new(name="RedBallForwardMaterial")
+        mat.diffuse_color = (1, 0, 0, 1)
+        mat.use_nodes = False
+    red_ball.data.materials.append(mat)
+else:
+    print("Moon'a çarpma olmadı veya farklı objeye çarptı.")
+
+
  
     # === KIRMIZI IŞININ ARKA TARAFA UZATILMASI ===
 
@@ -320,7 +357,7 @@ if camera and plane:
 
     if hit_point:
         # Önceki objeleri sil
-        for obj_name in ["Line Red Back", "Hit Point Back"]:
+        for obj_name in ["Line Red Back", "Red Ball Back"]:
             obj = bpy.data.objects.get(obj_name)
             if obj:
                 bpy.data.objects.remove(obj, do_unlink=True)
@@ -331,7 +368,7 @@ if camera and plane:
         # Kırmızı top ekle
         bpy.ops.mesh.primitive_uv_sphere_add(radius=0.02, location=hit_point)
         sphere = bpy.context.active_object
-        sphere.name = "Hit Point Back"
+        sphere.name = "Red Ball Back"
 
         mat = bpy.data.materials.get("HitMaterialBack")
         if not mat:
@@ -344,4 +381,51 @@ if camera and plane:
 else:
     print("Camera veya Plane Image bulunamadı.")
 
+
+
+# === Ball Green Hit ile Ball Yellow Hit arasında siyah çizgi ===
+
+line_black = bpy.data.objects.get("Line Black")
+if line_black:
+    bpy.data.objects.remove(line_black, do_unlink=True)
+
+# === Ball Green Hit ile Ball Yellow Hit arasında siyah çizgi ===
+obj1 = bpy.data.objects.get("Ball Green Hit")
+obj2 = bpy.data.objects.get("Ball Yellow Hit")
+
+if obj1 and obj2:
+    create_cylinder_between(
+        obj1.location,
+        obj2.location,
+        radius=0.005,
+        name="Line Black",
+        color=(0, 0, 0, 1)
+    )
+else:
+    print("Ball Green Hit veya Ball Yellow Hit objesi bulunamadı.")
+
+obj1 = bpy.data.objects.get("Ball Green Hit")
+obj2 = bpy.data.objects.get("Ball Yellow Hit")
+
+if obj1 and obj2:
+    create_cylinder_between(
+        obj1.location,
+        obj2.location,
+        radius=0.005,
+        name="Line Black",
+        color=(0, 0, 0, 1)
+    )
+else:
+    print("Ball Green Hit veya Ball Yellow Hit objesi bulunamadı.")
+
+
+for obj in bpy.data.objects:
+    if obj.name.startswith("Line") and obj.type == 'MESH':
+        # Eevee için gölgeyi kapat (Blender 3.6+)
+        if hasattr(obj, "visible_shadow"):
+            obj.visible_shadow = False
+
+        # Cycles kullanıyorsan aşağıdaki satır da çalışır
+        if hasattr(obj, "cycles_visibility"):
+            obj.cycles_visibility.shadow = False
 
