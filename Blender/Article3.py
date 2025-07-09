@@ -386,3 +386,14 @@ if camera and plane:
         print("Kırmızı ışın Plane Image düzlemine çarpmadı.")
 else:
     print("Camera veya Plane Image bulunamadı.")
+
+
+for obj in bpy.data.objects:
+    if obj.name.startswith("Line") and obj.type == 'MESH':
+        # Eevee için gölgeyi kapat (Blender 3.6+)
+        if hasattr(obj, "visible_shadow"):
+            obj.visible_shadow = False
+
+        # Cycles kullanıyorsan aşağıdaki satır da çalışır
+        if hasattr(obj, "cycles_visibility"):
+            obj.cycles_visibility.shadow = False
