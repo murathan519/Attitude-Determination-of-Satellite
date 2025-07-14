@@ -52,7 +52,7 @@ else:
     text_offset = 0.05 * radius
 
     # ---------- Meridyenler ----------
-    for angle in range(0, 360, 30):
+    for angle in range(0, 360, 10):
         curve_data = bpy.data.curves.new(name=f"Meridian_{angle}", type='CURVE')
         curve_data.dimensions = '3D'
         spline = curve_data.splines.new(type='POLY')
@@ -146,3 +146,36 @@ else:
     cube.parent = moon_obj
 
     print(f"Küp yerleştirildi: {latitude_deg}°, {longitude_deg}°")
+    
+    
+        # ---------- Kamera: Ay'ı gözlemleyen uydu gibi konumlandır ----------
+    # Kamera oluştur veya mevcutsa al
+    camera = bpy.data.objects.get("Camera")
+    if not camera:
+        cam_data = bpy.data.cameras.new("Camera")
+        camera = bpy.data.objects.new("Camera", cam_data)
+        bpy.context.collection.objects.link(camera)
+
+    # Kameranın hedef yüzey koordinatları
+    target_lat = -62.0
+    target_lon = 75.0
+    surface_radius = radius  # Moon'un yüzeyi
+    altitude = 0.75  # Yüzeyden yükseklik
+    total_distance = surface_radius + altitude
+
+    # Hedef noktanın dünya koordinatları
+    lat_rad = math.radians(target_lat)
+    lon_rad = math.radians(target_lon)
+    x = total_distance * math.cos(lat_rad) * math.cos(lon_rad)
+    y = total_distance * math.cos(lat_rad) * math.sin(lon_rad)
+    z = total_distance * math.sin(lat_rad)
+    cam_position = Vector((x, y, z))
+    camera.location = cam_position
+
+    # Kamerayı Moon merkezine döndür
+    direction = moon_obj.location - camera.location
+    direction.normalize()
+    camera.rotation_mode = 'QUATERNION'
+    camera.rotation_quaternion = direction.to_track_quat('-Z', 'Y')
+
+    print(f"Kamera yerleştirildi: {target_lat}°, {target_lon}°, {altitude} birim yukarıda")
